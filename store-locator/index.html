@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Locator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    window.initMap = () => {
+      console.log("Global inline initMap called. Waiting for triggerAppInitialization...");
+      const checkInterval = setInterval(() => {
+        if (window.triggerAppInitialization) {
+          clearInterval(checkInterval);
+          console.log("triggerAppInitialization found. Calling it.");
+          window.triggerAppInitialization();
+        } else {
+          console.log("Still waiting for triggerAppInitialization...");
+        }
+      }, 100); // Check every 100ms
+
+      // Timeout to prevent infinite loop if main.js fails catastrophically
+      setTimeout(() => {
+        if (!window.triggerAppInitialization) {
+          clearInterval(checkInterval);
+          console.error("Timeout: triggerAppInitialization not found after 5 seconds.");
+          const errorBar = document.getElementById('global-error-message-bar');
+          const errorText = document.getElementById('global-error-text');
+          if (errorBar && errorText && errorBar.classList.contains('hidden')) {
+              errorText.textContent = "Application script failed to load correctly after timeout. Please try refreshing.";
+              errorBar.classList.remove('hidden');
+          }
+        }
+      }, 5000); // 5 second timeout
+    };
+  </script>
+
+  <!-- Google Maps API will be loaded dynamically by src/main.js -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            meriendaOrange: {
+              DEFAULT: '#F59E0B', // Amber 500
+              light: '#FBBF24', // Amber 400
+              dark: '#D97706', // Amber 600
+            },
+            meriendaBrown: {
+              DEFAULT: '#78350F', // Amber 900
+              light: '#92400E', // Amber 800
+              dark: '#451A03', // Amber 950
+            },
+            gray: { // Extending or overriding gray palette for finer control
+              50: '#F9FAFB',
+              100: '#F3F4F6',
+              200: '#E5E7EB',
+              300: '#D1D5DB',
+              400: '#9CA3AF',
+              500: '#6B7280',
+              600: '#4B5563',
+              700: '#374151',
+              800: '#1F2937',
+              900: '#111827',
+            }
+          },
+          spacing: {
+            '12': '3rem',  // For 48px (~50px top padding)
+            '18': '4.5rem',
+            '24': '6rem',  // For 96px
+            '32': '8rem',  // Added for 128px (for increased bottom padding)
+          },
+          boxShadow: {
+            'brand-md': '0 4px 6px -1px rgba(245, 158, 11, 0.2), 0 2px 4px -1px rgba(245, 158, 11, 0.12)',
+            'brand-lg': '0 10px 15px -3px rgba(245, 158, 11, 0.2), 0 4px 6px -2px rgba(245, 158, 11, 0.1)',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="flex flex-col h-screen bg-gray-100 font-sans antialiased">
+
+  <!-- Header/Branding -->
+  <header class="bg-gray-50 shadow-lg p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center justify-between sticky top-0 z-50 border-b border-gray-200">
+    <div class="flex items-center space-x-3 sm:space-x-4 mb-2 sm:mb-0">
+      <img src="images/merienda-logo.jpeg" alt="Store Locator Logo" class="h-10 sm:h-12 w-auto rounded-md shadow-sm">
+      <h1 class="text-xl sm:text-2xl font-bold text-meriendaBrown-dark tracking-tight">Store Locator</h1>
+    </div>
+    <!-- Autocomplete Search Input Removed -->
+  </header>
+
+  <!-- Main Content Area: Map & Sidebar -->
+  <main class="relative flex-1 overflow-hidden">
+    <!-- Map Area - Will be full screen under the sidebar -->
+    <div id="map-area" class="absolute inset-0 bg-gray-300">
+      <!-- Map will be initialized here -->
+    </div>
+
+    <!-- Sidebar Area - Floating with padding -->
+    <aside id="sidebar-area" class="fixed bottom-0 left-0 right-0 z-20 h-1/3 bg-white rounded-t-lg shadow-2xl flex flex-col overflow-hidden sm:absolute sm:top-12 sm:left-4 sm:right-auto sm:h-auto sm:max-h-[calc(100vh-11rem)] sm:w-80 sm:max-w-xs md:w-96 md:max-w-sm lg:w-1/3 lg:max-w-md xl:w-1/4 xl:max-w-lg sm:rounded-lg sm:shadow-xl">
+      
+      <!-- Scrollable content area within the sidebar -->
+      <div class="flex-grow overflow-y-auto p-3 pt-4 sm:p-4 space-y-4">
+        <div id="global-error-message-bar" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md" role="alert">
+        <div class="flex">
+          <div class="py-1"><svg class="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM11 14v-4a1 1 0 0 0-2 0v4a1 1 0 1 0 2 0zm0-6a1 1 0 1 0-2 0 1 1 0 0 0 2 0z"/></svg></div>
+          <div>
+            <p class="font-bold">Error</p>
+            <p id="global-error-text" class="text-sm">Something went wrong.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="location-list-container" class="p-3 sm:p-4 bg-white rounded-xl shadow-brand-md hover:shadow-brand-lg transition-shadow duration-300">
+        <h3 class="text-lg sm:text-xl font-semibold text-meriendaBrown mb-3 sm:mb-4 tracking-tight">Food Trucks</h3>
+        <div class="mb-3 sm:mb-4">
+          <label for="open-now-filter" class="flex items-center cursor-pointer group">
+            <input type="checkbox" id="open-now-filter" class="form-checkbox h-5 w-5 text-meriendaOrange rounded focus:ring-2 focus:ring-offset-1 focus:ring-meriendaOrange-dark transition duration-150 ease-in-out">
+            <span class="ml-2 text-sm sm:text-base text-gray-700 group-hover:text-meriendaBrown-dark transition-colors">Open Now</span>
+          </label>
+        </div>
+        <ul id="location-list" class="space-y-2 sm:space-y-3 max-h-[400px] overflow-y-auto">
+          {/* Placeholder will be replaced by JavaScript. Initial message if no locations load. */}
+          <li class="p-3 text-gray-500 text-sm italic">Loading food truck locations...</li>
+        </ul>
+      </div>
+
+      <div id="truck-details-container" class="p-3 sm:p-4 bg-white rounded-xl shadow-brand-md hover:shadow-brand-lg transition-shadow duration-300">
+        <h3 class="text-lg sm:text-xl font-semibold text-meriendaBrown mb-3 sm:mb-4 tracking-tight">Truck Details</h3>
+        <div id="truck-details-content" class="text-sm text-gray-600 space-y-2">
+          <p class="italic text-gray-500">Select a food truck from the list above or directly from the map to see its details, operating hours, and nearby points of interest.</p>
+        </div>
+      </div>
+
+      <div id="poi-details-panel" class="p-3 sm:p-4 bg-white rounded-xl shadow-brand-md hover:shadow-brand-lg transition-shadow duration-300 hidden">
+        <div class="panel-header flex justify-between items-center pb-2 mb-2 border-b border-gray-200">
+          <h3 id="poi-panel-title" class="text-md sm:text-lg font-semibold text-meriendaBrown-dark tracking-tight">Nearby Place Details</h3>
+          <button id="poi-panel-close-button" class="close-button text-gray-500 hover:text-gray-700 text-2xl leading-none" aria-label="Close place details">&times;</button>
+        </div>
+        <div class="panel-content custom-scrollbar max-h-60 overflow-y-auto">
+          {/* Details for a selected POI will appear here. Click a POI marker on the map. */}
+          <gmp-place-details id="poi-place-details-component" size="medium">
+             <p class="p-3 text-gray-500 text-sm italic">Click a Point of Interest marker on the map to see details here.</p>
+          </gmp-place-details>
+        </div>
+      </div>
+
+      <div id="directions-text-container" class="p-3 sm:p-4 bg-white rounded-xl shadow-brand-md hover:shadow-brand-lg transition-shadow duration-300 hidden">
+        <h3 class="text-lg sm:text-xl font-semibold text-meriendaBrown mb-3 sm:mb-4 tracking-tight">Directions</h3>
+        <div id="directions-content" class="text-sm text-gray-600 space-y-2 custom-scrollbar max-h-60 overflow-y-auto">
+          <p class="p-3 text-gray-500 text-sm italic">Directions will appear here once a destination is chosen.</p>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <script type="module" src="/src/main.js" defer></script>
+</body>
+</html>

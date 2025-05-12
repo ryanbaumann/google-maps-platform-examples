@@ -1,0 +1,104 @@
+[
+  {
+    "id": 1,
+    "name": "Merienda - Presidio Tunnel Tops",
+    "lat": 37.8000,
+    "lng": -122.4700,
+    "address": "Near Presidio Tunnel Tops, San Francisco, CA",
+    "description": "Authentic Merienda street food delights!",
+    "opening_hours": {
+      "Monday": "11:00-19:00",
+      "Tuesday": "11:00-19:00",
+      "Wednesday": "11:00-19:00",
+      "Thursday": "11:00-19:00",
+      "Friday": "11:00-20:00",
+      "Saturday": "10:00-20:00",
+      "Sunday": "10:00-18:00"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Merienda - Valencia St, Mission",
+    "lat": 37.7650,
+    "lng": -122.4210,
+    "address": "Near Valencia Street, Mission District, San Francisco, CA",
+    "description": "Authentic Merienda street food delights!",
+    "opening_hours": {
+      "Monday": "11:00-19:00",
+      "Tuesday": "11:00-19:00",
+      "Wednesday": "11:00-19:00",
+      "Thursday": "11:00-19:00",
+      "Friday": "11:00-20:00",
+      "Saturday": "10:00-20:00",
+      "Sunday": "10:00-18:00"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Merienda - Ferry Building",
+    "lat": 37.7955,
+    "lng": -122.3937,
+    "address": "Near Ferry Building, San Francisco, CA",
+    "description": "Authentic Merienda street food delights!",
+    "opening_hours": {
+      "Monday": "11:00-19:00",
+      "Tuesday": "11:00-19:00",
+      "Wednesday": "11:00-19:00",
+      "Thursday": "11:00-19:00",
+      "Friday": "11:00-20:00",
+      "Saturday": "10:00-20:00",
+      "Sunday": "10:00-18:00"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Merienda - West Portal",
+    "lat": 37.7395,
+    "lng": -122.4655,
+    "address": "Near West Portal Station, San Francisco, CA",
+    "description": "Authentic Merienda street food delights!",
+    "opening_hours": {
+      "Monday": "11:00-19:00",
+      "Tuesday": "11:00-19:00",
+      "Wednesday": "11:00-19:00",
+      "Thursday": "11:00-19:00",
+      "Friday": "11:00-20:00",
+      "Saturday": "10:00-20:00",
+      "Sunday": "10:00-18:00"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Merienda - Haight-Ashbury",
+    "lat": 37.7695,
+    "lng": -122.4465,
+    "address": "Near Haight-Ashbury, San Francisco, CA",
+    "description": "Authentic Merienda street food delights!",
+    "opening_hours": {
+      "Monday": "11:00-19:00",
+      "Tuesday": "11:00-19:00",
+      "Wednesday": "11:00-19:00",
+      "Thursday": "11:00-19:00",
+      "Friday": "11:00-20:00",
+      "Saturday": "10:00-20:00",
+      "Sunday": "10:00-18:00"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Merienda - Dogpatch",
+    "lat": 37.7590,
+    "lng": -122.3890,
+    "address": "Near Dogpatch, San Francisco, CA",
+    "description": "Authentic Merienda street food delights!",
+    "opening_hours": {
+      "Monday": "11:00-19:00",
+      "Tuesday": "11:00-19:00",
+      "Wednesday": "11:00-19:00",
+      "Thursday": "11:00-19:00",
+      "Friday": "11:00-20:00",
+      "Saturday": "10:00-20:00",
+      "Sunday": "10:00-18:00"
+    }
+  }
+]
