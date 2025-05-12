@@ -1,4 +1,4 @@
-![Store Locator App Preview](./store-locator/app-preview.png)
+![Store Locator App Preview](./store-locator/store-locator.png)
 
 # Google Maps Platform Web Examples
 

@@ -1,4 +1,4 @@
-![Store Locator App Preview](app-preview.png)
+![Store Locator App Preview](store-locator.png)
 
 # Store Locator
 
