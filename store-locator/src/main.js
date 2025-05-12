@@ -7,6 +7,8 @@ import * as uiModule from './uiModule.js';
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const MAP_ID = import.meta.env.VITE_MAP_ID;
 const GMP_CALLBACK_NAME = 'gmpEntryPoint'; // Unique name for the callback
+const SF_CENTER = { lat: 37.7749, lng: -122.4194 }; // San Francisco Civic Center approx.
+const MAX_DISTANCE_METERS = 80000; // Approx 50 miles
 
 // --- State ---
 let appState = {
@@ -15,7 +17,8 @@ let appState = {
   map: null,
   mapsApiLoaded: false, // Track API loading status
   mapsApiLoadError: null, // Store potential loading error
-  apiKey: API_KEY // Add API_KEY to appState
+  apiKey: API_KEY, // Add API_KEY to appState
+  isUserNearbySF: false // Flag to check if user is close enough for directions
 };
 
 // --- API Loading ---
@@ -68,6 +71,7 @@ function handleMarkerClick(locationId) {
     uiModule.handleLocationSelection(locationId, null);
 }
 
+// *** CORRECTED actualAppInitialization Function ***
 async function actualAppInitialization(mapId) {
   console.log("actualAppInitialization from src/main.js called (v5)");
   if (!appState.mapsApiLoaded) {
@@ -81,17 +85,17 @@ async function actualAppInitialization(mapId) {
       return;
   }
 
-  try {
+  try { // Main try block starts here
     appState.locations = await fetchLocations();
     console.log("Locations fetched in main.js:", appState.locations);
 
-    try {
+    try { // Nested try for user location
         appState.userLocation = await getUserLocation();
         console.log("User location fetched in main.js:", appState.userLocation);
     } catch (userLocationError) {
         console.warn("Could not get user location on init (main.js):", userLocationError.message);
         // Even if user location fails, proceed to initialize map with default or truck center
-    }
+    } // Nested catch ends here
 
     appState.map = await mapModule.initMapInstance(
         'map-area',
@@ -102,19 +106,37 @@ async function actualAppInitialization(mapId) {
     );
     console.log("Map initialized in main.js:", appState.map ? "Success" : "Failed");
 
-    // Display user location marker if available
-    if (appState.userLocation && appState.map) {
-      await mapModule.displayUserLocationMarker(appState.userLocation);
-      // Optionally pan to user's location if map hasn't centered on a selected truck yet
-      // For now, let truck selection or default centering take precedence.
+    // Check distance and display user location marker conditionally
+    if (appState.userLocation && appState.map && google.maps?.geometry?.spherical) {
+        const userLatLng = new google.maps.LatLng(appState.userLocation.lat, appState.userLocation.lng);
+        const sfLatLng = new google.maps.LatLng(SF_CENTER.lat, SF_CENTER.lng);
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, sfLatLng);
+
+        appState.isUserNearbySF = distance <= MAX_DISTANCE_METERS;
+        console.log(`User distance from SF center: ${Math.round(distance / 1000)} km. Nearby: ${appState.isUserNearbySF}`);
+
+        if (appState.isUserNearbySF) {
+            await mapModule.displayUserLocationMarker(appState.userLocation);
+            console.log("User is nearby SF, displaying location marker.");
+        } else {
+            console.log("User is not nearby SF, user location marker hidden.");
+            // Optionally inform the user they are too far away for directions feature
+            // uiModule.showInfoMessage("Directions are only available when you are near San Francisco.");
+        }
+    } else if (appState.userLocation && appState.map) {
+        // Geometry library might not be loaded yet, though unlikely with current setup
+        console.warn("Could not check user distance to SF: Geometry library not ready?");
+    }
+
+    // Optionally pan to user's location if map hasn't centered on a selected truck yet
+    // For now, let truck selection or default centering take precedence.
       // If you want to always center on user first:
       // mapModule.panToLocation(appState.userLocation, 14);
-    }
 
     uiModule.initUI(appState, mapModule);
     console.log("uiModule initialized from main.js.");
 
-  } catch (error) {
+  } catch (error) { // Main catch block starts here
     console.error("Critical error during actualAppInitialization (v5):", error.message, error.stack);
     // Use the UI module's error display if available
     if (uiModule && uiModule.showGlobalError) {
@@ -127,7 +149,7 @@ async function actualAppInitialization(mapId) {
             errorBar.classList.remove('hidden');
         }
     }
-  }
+  } // Main catch block ends here
 }
 
 // --- Initialization Trigger ---

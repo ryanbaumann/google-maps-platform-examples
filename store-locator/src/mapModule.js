@@ -37,15 +37,6 @@ export async function initMapInstance(
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
-      restriction: {
-        latLngBounds: {
-          north: 37.8,
-          south: 37.55,
-          east: -122.40,
-          west: -122.,
-        },
-        strictBounds: true,
-      },
     });
 
     // Add listener to close InfoWindow when map is clicked
@@ -80,7 +71,7 @@ async function displayTruckMarkers(mapInstance, locationsData, onMarkerClickCall
     markerContent.className = 'p-1 bg-meriendaOrange rounded-full shadow-lg hover:scale-110 transition-transform duration-150';
     const logoImageElement = document.createElement('img');
     // Set class and alt first
-    logoImageElement.className = 'w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white';
+    logoImageElement.className = 'w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white';
     logoImageElement.alt = location.name + " logo";
     // Set src *after* creating the element - Use relative path for base: './'
     logoImageElement.src = 'images/merienda-logo.jpeg';
@@ -124,8 +115,8 @@ export async function displayUserLocationMarker(position) {
 
     // Simple blue dot for user location
     const userMarkerContent = document.createElement('div');
-    userMarkerContent.style.width = '20px'; // Increased from 16px
-    userMarkerContent.style.height = '20px'; // Increased from 16px
+    userMarkerContent.style.width = '24px'; // Increased from 20px
+    userMarkerContent.style.height = '24px'; // Increased from 20px
     userMarkerContent.style.borderRadius = '50%';
     userMarkerContent.style.backgroundColor = '#4285F4'; // Google Blue
     userMarkerContent.style.border = '4px solid white'; // Increased border for visibility
@@ -142,13 +133,131 @@ export async function displayUserLocationMarker(position) {
             position: position,
             content: userMarkerContent,
             title: 'Your Location',
-            zIndex: 10 // Lower than POIs and trucks
+            zIndex: 30 // Higher than POIs (15) and trucks (20)
         });
         console.log("mapModule.js: Created user location marker.");
     }
 
     // Optionally pan the map to the user's location the first time it's added
     // panToLocation(position, 14); // Zoom level 14 might be appropriate
+}
+// --- Route Display ---
+let currentRoutePolyline = null; // To store the currently displayed route
+
+/**
+ * Clears the currently displayed route polyline from the map.
+ */
+export function clearRoutePolyline() {
+  if (currentRoutePolyline) {
+    currentRoutePolyline.setMap(null);
+    currentRoutePolyline = null;
+    console.log("mapModule.js: Cleared previous route polyline.");
+  }
+}
+
+/**
+ * Displays a route polyline on the map.
+ * @param {Array<{lat: number, lng: number}>} decodedPath - The array of LatLng coordinates for the route.
+ */
+async function displayRoutePolyline(decodedPath) {
+  if (!map || !decodedPath || decodedPath.length === 0) {
+    console.warn("Map not ready or path invalid for displaying route polyline.");
+    return;
+  }
+  clearRoutePolyline(); // Clear existing route first
+
+  try {
+    const { Polyline } = await google.maps.importLibrary("maps");
+    const { LatLngBounds } = await google.maps.importLibrary("core");
+
+    currentRoutePolyline = new Polyline({
+      path: decodedPath,
+      geodesic: true,
+      strokeColor: '#4285F4', // Google Blue
+      strokeOpacity: 0.8,
+      strokeWeight: 5,
+      map: map,
+      zIndex: 5 // Lower than user marker and POIs
+    });
+
+    // Adjust map bounds to fit the route - DISABLED based on feedback
+    // const bounds = new LatLngBounds();
+    // decodedPath.forEach(point => bounds.extend(point));
+    // map.fitBounds(bounds, { top: 100, bottom: 150, left: 100, right: 100 }); // Add padding
+
+    console.log("mapModule.js: Displayed new route polyline.");
+
+  } catch (error) {
+    console.error("Error displaying route polyline:", error);
+    clearRoutePolyline(); // Clean up if error occurs
+  }
+}
+
+/**
+ * Fetches a route between two points using the Routes API and displays it.
+ * @param {{lat: number, lng: number}} originLatLng - The starting coordinates.
+ * @param {{lat: number, lng: number}} destinationLatLng - The ending coordinates.
+ * @param {string} apiKey - The Google Maps API Key.
+ * @returns {Promise<Object|null>} The first route object or null if failed.
+ */
+export async function fetchAndDisplayRoute(originLatLng, destinationLatLng, apiKey) {
+  if (!originLatLng || !destinationLatLng) {
+    console.warn("Origin or destination missing for route calculation.");
+    clearRoutePolyline(); // Clear any existing route if input is invalid
+    return null;
+  }
+  if (!apiKey) {
+      console.error("API Key missing for route calculation.");
+      clearRoutePolyline();
+      return null;
+  }
+
+  console.log("mapModule.js: Fetching route from", originLatLng, "to", destinationLatLng);
+  clearRoutePolyline(); // Clear previous route before fetching new one
+
+  const url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': apiKey,
+    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
+  };
+  const body = JSON.stringify({
+    origin: { location: { latLng: { latitude: originLatLng.lat, longitude: originLatLng.lng } } },
+    destination: { location: { latLng: { latitude: destinationLatLng.lat, longitude: destinationLatLng.lng } } },
+    travelMode: 'DRIVE', // Default to DRIVE, could be parameterized later
+    routingPreference: 'TRAFFIC_AWARE',
+    computeAlternativeRoutes: false,
+  });
+
+  try {
+    const response = await fetch(url, { method: 'POST', headers, body });
+    if (!response.ok) {
+      let errorDetails = `Routes API Error (${response.status})`;
+      try { const errorData = await response.json(); errorDetails = errorData.error?.message || JSON.stringify(errorData); } catch (e) {}
+      throw new Error(errorDetails);
+    }
+
+    const data = await response.json();
+    const route = data.routes?.[0];
+
+    if (route?.polyline?.encodedPolyline) {
+      // Ensure geometry library is loaded (should be via main.js)
+      if (!google.maps.geometry || !google.maps.geometry.encoding) {
+          await google.maps.importLibrary("geometry"); // Load if missing
+      }
+      const decodedPath = google.maps.geometry.encoding.decodePath(route.polyline.encodedPolyline);
+      await displayRoutePolyline(decodedPath);
+      console.log(`mapModule.js: Route fetched successfully. Distance: ${route.distanceMeters}m, Duration: ${route.duration}`);
+      return route; // Return the route data
+    } else {
+      console.warn("No route found or polyline missing in the response.");
+      return null;
+    }
+  } catch (error) {
+    console.error('Route fetch error:', error);
+    // Optionally show error to user via uiModule if needed
+    return null;
+  }
 }
 
 

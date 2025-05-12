@@ -236,6 +236,43 @@ export function handleLocationSelection(truckId, listItemElement) {
     displayTruckDetailsInSidebar(truckId);
     fetchAndDisplayNearbyPOIs(selectedLocation); // Automatically explore nearby
 
+    // --- START: Add route display logic (conditional) ---
+    if (_appState.isUserNearbySF) { // Check if user is nearby first
+        const userLoc = _appState.userLocation; // Get user location from state
+        const truckLoc = selectedLocation.marker.position; // Get truck location
+        const apiKey = _appState.apiKey; // Get API key from state
+
+        if (userLoc && truckLoc && apiKey) {
+            console.log("uiModule: Requesting route calculation (user nearby)...");
+            _mapModule.fetchAndDisplayRoute(userLoc, truckLoc, apiKey)
+                .then(route => {
+                    if (route) {
+                        console.log("uiModule: Route displayed successfully.");
+                        // TODO: Optionally display route info (distance/duration) in the UI
+                        // displayRouteInfo(route); // Example function call
+                    } else {
+                        console.warn("uiModule: Route calculation or display failed.");
+                        // Optionally show a message to the user
+                        // showGlobalError("Could not calculate route to the selected truck.");
+                        _mapModule.clearRoutePolyline(); // Ensure any partial route is cleared
+                    }
+                })
+                .catch(error => {
+                     console.error("uiModule: Error during route fetch/display:", error);
+                     // showGlobalError("An error occurred while calculating the route.");
+                     _mapModule.clearRoutePolyline();
+                });
+        } else {
+            console.warn("uiModule: Cannot calculate route - User location, truck location, or API key is missing (even though user is nearby).");
+            _mapModule.clearRoutePolyline(); // Clear any existing route if we can't calculate a new one
+        }
+    } else {
+        // User is not nearby SF, clear any existing route and skip calculation
+        console.log("uiModule: Skipping route calculation (user not nearby SF).");
+        _mapModule.clearRoutePolyline();
+    }
+    // --- END: Add route display logic (conditional) ---
+
     const locationListItems = document.querySelectorAll('#location-list li');
     locationListItems.forEach(item => {
         item.classList.remove('bg-meriendaOrange-light', 'ring-2', 'ring-meriendaOrange-dark');
@@ -251,6 +288,7 @@ export function handleLocationSelection(truckId, listItemElement) {
     }
   } else {
       showGlobalError("Selected location could not be displayed on the map.");
+      _mapModule.clearRoutePolyline(); // Clear route if selection fails
   }
 }
 
