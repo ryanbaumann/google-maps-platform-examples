@@ -2,7 +2,7 @@
 
 # Google Maps Platform Web Examples
 
-Welcome to the Ryan's examples using Google Maps Platform repository! This collection showcases various common application architectures and inspires developers building modern, interactive web applications using the Google Maps Platform. These are not associated with Google Maps Platform - they are my own examples I'm sharing personally with developers.
+Welcome to my personal web examples of common apps using Google Maps Platform! This collection showcases various common application architectures and inspires developers building modern, interactive web applications using the Google Maps Platform. These are not associated with Google Maps Platform - they are my own examples I'm sharing personally with developers.
 
 ## Purpose
 
